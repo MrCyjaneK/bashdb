@@ -1,0 +1,42 @@
+#!/bin/bash
+errcho(){ >&2 echo $@; }
+DBPATH=${DBPATH:-/home/`whoami`/.bashdb}
+
+ENTRY="$2"                #Baaad
+ENTRY="${ENTRY//./_}"     #Better
+ENTRY="${ENTRY//\//_}"    #oOOOOOOOOOOOOOOOOOOOOOOOOO
+DATA="$3"
+
+whattodo=`echo "${1,,}"`
+
+if [ ! -d "$DBPATH" ]; then
+    mkdir "$DBPATH";
+fi   
+cd "$DBPATH"
+
+if [[ "$whattodo" == "store" ]]; then
+    if [ -f "$ENTRY" ]; then
+        errcho "[bashdb] > Failed to execute: '$@', error: it already exist, use 'DELETE' first"
+        exit 1;
+    fi
+    echo "$DATA" > "$ENTRY";
+    exit 0;
+fi
+if [[ "$whattodo" == "delete" ]]; then
+    if [ ! -f "$ENTRY" ]; then
+        errcho "[bashdb] > Entry will not get deleted because it didn't exist, imo it's not error so here's 0 exit code."
+        exit 0;
+    fi
+    rm "$ENTRY";
+    exit $?;
+fi;
+if [[ "$whattodo" == "read" ]]; then
+    if [ ! -f "$ENTRY" ]; then
+        errcho "[bashdb] > It doesn't exist"
+        exit 1;
+    fi
+    cat "$ENTRY";
+    exit 0;
+fi;
+
+errcho "Usage: bashdb [store|delete|read] key [value (only needed in store)]"
